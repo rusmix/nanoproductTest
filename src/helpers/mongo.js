@@ -1,4 +1,8 @@
 const mongoose = require("mongoose");
-export const mongoConnect = async () => {
+require('dotenv').config();
+
+ const mongoConnect = async () => {
   mongoose.connect(process.env.MONGO_URL);
 };
+
+module.exports = mongoConnect;

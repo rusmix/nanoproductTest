@@ -10,15 +10,21 @@ router.get("/", async (req, res) => {
   return res.send(NOT_FOUND);
 });
 
-router.post("/", (req, res) => {
-  const newUser = req.body;
+router.post("/", async (req, res) => {
+  const body = req.body;
+  if (!body.name || !body.phone)
+    return res.status(400).send({ message: "invalid data" });
+
+  const newUser = new User(body);
+  await newUser.save();
   console.log("User created:", newUser);
+
   res.status(201).send({ message: "User created successfully", data: newUser });
 });
 
 router.get("/:id", async (req, res) => {
   const userId = req.params.id;
-  const user = await User.findOne({ id: userId });
+  const user = await User.findOne({ _id: userId });
   if (user) return res.send({ data: user });
   return res.send(NOT_FOUND);
 });

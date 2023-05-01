@@ -8,11 +8,13 @@ const doctor = new mongoose.Schema({
   slots: {
     type: [
       {
+        _id: false,
         time: Date,
         isFree: { type: Boolean, default: true },
-        client: mongoose.Schema.Types.ObjectId,
+        client: { type: mongoose.Schema.Types.ObjectId, default: null },
       },
     ],
+    default: [],
   },
 });
 

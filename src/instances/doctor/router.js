@@ -6,22 +6,40 @@ const User = require("../user/model");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const doctors = await Doctor.find({});
+  const doctors = await Doctor.find();
   if (doctors.length !== 0) return res.send({ data: doctors });
   return res.send(NOT_FOUND);
 });
 
-router.post("/", (req, res) => {
-  const newDoctor = req.body;
-  console.log("Doctor created:", newDoctor);
-  res
-    .status(201)
-    .send({ message: "Doctor created successfully", data: newDoctor });
+router.post("/", async (req, res) => {
+  const body = req.body;
+  if (!body.name || !body.phone || !body.spec)
+    //TODO: phone validation :)
+    return res.status(400).send({ message: "invalid data" });
+
+  const newDoc = new Doctor(body);
+  await newDoc.save();
+  console.log("Doc created:", newDoc);
+
+  res.status(201).send({ message: "Doc created successfully", data: newDoc });
+});
+
+router.post("/:id/slot", async (req, res) => {
+  const slotTime = req.body.time;
+  const doctorId = req.params.id;
+
+  const doctor = await Doctor.findOne({ _id: doctorId });
+  if (!doctor) return res.status(400).send({ error: NOT_FOUND });
+
+  doctor.slots.push({ time: slotTime });
+  await doctor.save();
+
+  res.status(201).send({ message: "Slot created successfully", data: doctor });
 });
 
 router.get("/:id", async (req, res) => {
   const doctorId = req.params.id;
-  const doctor = await Doctor.findOne({ id: doctorId });
+  const doctor = await Doctor.findOne({ _id: doctorId });
   if (doctor) return res.send({ data: doctor });
   return res.status(404).send(NOT_FOUND);
 });
@@ -34,16 +52,15 @@ router.post("/visit", async (req, res) => {
   const userId = visit.user_id;
   const timeSlot = visit.slot;
 
-  const doctor = await Doctor.findOne({ id: doctorId });
-  const user = await User.findOne({ id: userId });
+  const doctor = await Doctor.findOne({ _id: doctorId });
+  const user = await User.findOne({ _id: userId });
 
   if (!doctor) return res.status(404).send({ error: NOT_FOUND });
 
-  const slotIndex = doctor.slots.findIndex((el) => {
-    el.time === timeSlot;
-  });
+  const slotIndex = doctor.slots.findIndex((el) => el.time === timeSlot);
   const slot = doctor[slotIndex];
 
+  if (!slot) return res.status(404).send({ error: NOT_FOUND });
   if (!slot.isFree) return res.status(409).send({ error: "Slot is not free" });
 
   doctor[slotIndex].client = userId;

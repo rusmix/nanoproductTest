@@ -11,6 +11,7 @@ const user = new mongoose.Schema({
         doctor: mongoose.Schema.Types.ObjectId,
       },
     ],
+    default: [],
   },
 });
 

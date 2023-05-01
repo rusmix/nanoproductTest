@@ -1,15 +1,19 @@
 const express = require("express");
 const mongoConnect = require("./helpers/mongo");
-const usersRouter = require('./instances/user/router');
+const usersRouter = require("./instances/user/router");
+const { USER_PATH } = require("./instances/user/constants");
+const doctorsRouter = require("./instances/doctor/router");
+const { DOCTOR_PATH } = require("./instances/doctor/constants");
 
-require('dotenv').config();
+require("dotenv").config();
 
 const App = async () => {
   const app = express();
   await mongoConnect();
   app.use(express.json());
-  
-  app.use('/users', usersRouter);
+
+  app.use(USER_PATH, usersRouter);
+  app.use(DOCTOR_PATH, doctorsRouter);
 
   app.get("/", (req, res) => {
     res.send("Hello world");

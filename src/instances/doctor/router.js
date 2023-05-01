@@ -1,6 +1,7 @@
 const express = require("express");
 const { NOT_FOUND } = require("./constants");
 const Doctor = require("./model");
+const User = require("../user/model");
 
 const router = express.Router();
 
@@ -34,16 +35,25 @@ router.post("/visit", async (req, res) => {
   const timeSlot = visit.slot;
 
   const doctor = await Doctor.findOne({ id: doctorId });
+  const user = await User.findOne({ id: userId });
 
   if (!doctor) return res.status(404).send({ error: NOT_FOUND });
 
-  const slot = doctor.slots.find((el) => {
+  const slotIndex = doctor.slots.findIndex((el) => {
     el.time === timeSlot;
   });
+  const slot = doctor[slotIndex];
 
-  if(!slot.isFree)
+  if (!slot.isFree) return res.status(409).send({ error: "Slot is not free" });
 
-  res.send({ message: "TEST" });
+  doctor[slotIndex].client = userId;
+  doctor[slotIndex].isFree = false;
+  await doctor.save();
+
+  user.futureSlots.push({ time: timeSlot, doctor: doctorId });
+  await user.save();
+
+  return res.send({ message: "Slot is reserved" });
 });
 
 module.exports = router;

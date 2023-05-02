@@ -5,12 +5,7 @@ const user = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true },
   futureSlots: {
-    type: [
-      {
-        time: Date,
-        doctor: mongoose.Schema.Types.ObjectId,
-      },
-    ],
+    type: [{ _id: false, time: Date, doctor: mongoose.Schema.Types.ObjectId }],
     default: [],
   },
 });

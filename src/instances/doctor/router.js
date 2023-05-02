@@ -2,7 +2,7 @@ const express = require("express");
 const { NOT_FOUND } = require("./constants");
 const Doctor = require("./model");
 const User = require("../user/model");
-
+const setNotification = require("../functions");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -55,22 +55,27 @@ router.post("/visit", async (req, res) => {
   const doctor = await Doctor.findOne({ _id: doctorId });
   const user = await User.findOne({ _id: userId });
 
-  if (!doctor) return res.status(404).send({ error: NOT_FOUND });
+  if (!doctor) return res.status(404).send({ error: "doctor not found" });
 
-  const slotIndex = doctor.slots.findIndex((el) => el.time === timeSlot);
-  const slot = doctor[slotIndex];
+  const slotIndex = doctor.slots.findIndex(
+    (el) => new Date(el.time).getTime() === new Date(timeSlot).getTime()
+  );
+  console.log(slotIndex);
 
-  if (!slot) return res.status(404).send({ error: NOT_FOUND });
+  const slot = doctor.slots[slotIndex];
+
+  if (!slot) return res.status(404).send({ error: "slot not found" });
   if (!slot.isFree) return res.status(409).send({ error: "Slot is not free" });
 
-  doctor[slotIndex].client = userId;
-  doctor[slotIndex].isFree = false;
+  doctor.slots[slotIndex].client = userId;
+  doctor.slots[slotIndex].isFree = false;
   await doctor.save();
 
   user.futureSlots.push({ time: timeSlot, doctor: doctorId });
   await user.save();
 
-  return res.send({ message: "Slot is reserved" });
+  setNotification(doctor.slots[slotIndex], doctor);
+  return res.send({ message: "Slot is reserved successfully" });
 });
 
 module.exports = router;
